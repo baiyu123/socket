@@ -2,6 +2,8 @@ import socket
 import sys
 from thread import *
 import cv2
+import picamera
+import numpy as np
 
 HOST =  ''
 PORT = 8888
@@ -30,11 +32,18 @@ def clientthread(conn):
       
       #Receiving from client
       data = conn.recv(1024)
-      reply = 'OK...' + data
-      if not data:
+      parse = data.split()
+      if parse[0] == 'capture':
+        stream = io.BytesIO()
+        with picamera.PiCamera() as camera:
+            camera.capture(stream, format='jpeg')
+        data = np.fromstring(stream.getvalue(), dtype=np.uint8)
+        image = cv2.imdecode(data,1)
+        conn.sendall(reply)
+      if not parse[0]:
         break
-        
-      conn.sendall(reply)
+
+
   
     #came out of loop
   conn.close()
